@@ -1,17 +1,30 @@
 # gestor_tareas_local
 
-A new Flutter project.
+Aplicación Flutter para administrar tareas con una base de datos SQLite local, sin servidor ni conexión a internet, diseñada para Android, iOS, Windows, Linux, macOS y web.
 
-## Getting Started
+## Tecnología de persistencia
 
-This project is a starting point for a Flutter application.
+Para elegir la tecnología a utilizar se analizaron dos opciones: sqflite y drift con drift_flutter.
 
-A few resources to get you started if this is your first Flutter project:
+- sqflite no soporta web, y para Windows y Linux requiere paquetes adicionales.
+- drift_flutter soporta las seis plataformas con el mismo código.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Por ello se optó por Drift + drift_flutter, ya que nos ahorra escribir código aparte para cada plataforma: con una sola llamada a driftDatabase(name: ...) la base de datos se abre en la ubicación adecuada de cada una. En web requiere los archivos sqlite3.wasm y drift_worker.js dentro de la carpeta web/.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Diseño de la tabla
+
+Posteriormente, para el diseño de la tabla se consultó la documentación existente y a partir de ahí se definió la siguiente estructura (tabla tareas):
+
+ Columna    | Tipo      | Reglas |
+
+id          | INTEGER   | PRIMARY KEY, se autoincrementa |
+titulo      | TEXT      | NOT NULL; la app rechaza vacíos o solo espacios |
+completada  | INTEGER   | 0 = pendiente, 1 = completada; DEFAULT 0 |
+
+SQLite no tiene un tipo booleano, por lo que completada se guarda como entero (0/1). Drift lo maneja como bool en Dart.
+
+## Cómo ejecutar
+
+    flutter pub get
+    flutter test
+    flutter run -d chrome
