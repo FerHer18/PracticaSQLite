@@ -21,39 +21,89 @@ class _TareasPageState extends State<TareasPage> {
     super.initState();
     _cargarTareas();
   }
-  
+
   Future<void> _cargarTareas() async {
-    final tareas = await widget.db.obtenerTareas();
-    if (!mounted) return;
-    setState(() {
-      _tareas = tareas;
-    });
+    try {
+      final tareas = await widget.db.obtenerTareas();
+      if (!mounted) return;
+      setState(() {
+        _tareas = tareas;
+      });
+    } catch (e) {
+      _mostrarMensaje('No se pudieron cargar las tareas');
+    }
   }
 
   Future<void> _agregarTarea() async {
     final titulo = _tituloController.text.trim();
     if (titulo.isEmpty) {
-      _pendiente('Escribe un título para la tarea');
+      _mostrarMensaje('Escribe un título para la tarea');
       return;
     }
-    await widget.db.agregarTarea(titulo);
-    _tituloController.clear();
-    await _cargarTareas();
+    try {
+      await widget.db.agregarTarea(titulo);
+      _tituloController.clear();
+      await _cargarTareas();
+    } catch (e) {
+      _mostrarMensaje('No se pudo guardar la tarea');
+    }
   }
 
-  void _alternarCompletada(Tarea tarea, bool completada) {
-    _pendiente('Implementar actualización de tarea');
+  Future<void> _alternarCompletada(Tarea tarea, bool completada) async {
+    try {
+      await widget.db.cambiarEstado(tarea.id, completada);
+      await _cargarTareas();
+    } catch (e) {
+      _mostrarMensaje('No se pudo actualizar el estado de la tarea');
+    }
   }
 
-  void _editarTarea(Tarea tarea) {
-    _pendiente('Implementar edición de título');
+  Future<void> _eliminarTarea(Tarea tarea) async {
+    try {
+      await widget.db.eliminarTarea(tarea.id);
+      await _cargarTareas();
+    } catch (e) {
+      _mostrarMensaje('No se pudo eliminar la tarea');
+    }
   }
 
-  void _eliminarTarea(Tarea tarea) {
-    _pendiente('Implementar eliminación de tarea');
+  Future<void> _editarTarea(Tarea tarea) async {
+    final controller = TextEditingController(text: tarea.titulo);
+    final nuevoTitulo = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar tarea'),
+        content: TextField(controller: controller, autofocus: true),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (nuevoTitulo == null) return;
+
+    final titulo = nuevoTitulo.trim();
+    if (titulo.isEmpty) {
+      _mostrarMensaje('El título no puede estar vacío');
+      return;
+    }
+    try {
+      await widget.db.editarTitulo(tarea.id, titulo);
+      await _cargarTareas();
+    } catch (e) {
+      _mostrarMensaje('No se pudo editar la tarea');
+    }
   }
 
-  void _pendiente(String mensaje) {
+  void _mostrarMensaje(String mensaje) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(mensaje)),
     );

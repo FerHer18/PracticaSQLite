@@ -22,4 +22,15 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> agregarTarea(String titulo) =>
       into(tareas).insert(TareasCompanion.insert(titulo: titulo));
+
+  Future<int> cambiarEstado(int id, bool completada) =>
+    (update(tareas)..where((t) => t.id.equals(id)))
+        .write(TareasCompanion(completada: Value(completada)));
+
+  Future<int> eliminarTarea(int id) =>
+    (delete(tareas)..where((t) => t.id.equals(id))).go();
+
+  Future<int> editarTitulo(int id, String titulo) =>
+    (update(tareas)..where((t) => t.id.equals(id)))
+      .write(TareasCompanion(titulo: Value(titulo)));
 }
